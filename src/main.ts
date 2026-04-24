@@ -20,7 +20,17 @@ interface EscenariosUI {
 
 // Crea una sala con el tamano indicado usando 0 (libre) en todos los asientos.
 function inicializarSala(filas = 8, columnas = 10): Sala {
-  return Array.from({ length: filas }, () => Array(columnas).fill(0));
+  const sala: Sala = [];
+
+  for (let i = 0; i < filas; i++) {
+    const fila: number[] = [];
+    for (let j = 0; j < columnas; j++) {
+      fila.push(0);
+    }
+    sala.push(fila);
+  }
+
+  return sala;
 }
 
 // Devuelve una representacion de texto de la sala usando X para ocupado y L para libre.
@@ -30,14 +40,24 @@ function mostrarSala(sala: Sala): string {
   }
 
   const columnas = sala[0].length;
-  const encabezado = `    ${Array.from({ length: columnas }, (_, i) => `${i + 1}`.padStart(2, " ")).join(" ")}`;
+  let encabezado = "    ";
+  for (let i = 0; i < columnas; i++) {
+    encabezado += `${String(i + 1).padStart(2, " ")}${i < columnas - 1 ? " " : ""}`;
+  }
 
-  const filasFormateadas = sala.map((fila, indiceFila) => {
-    const asientos = fila.map((asiento) => (asiento === 1 ? "X" : "L")).join("  ");
-    return `F${String(indiceFila + 1).padStart(2, "0")}: ${asientos}`;
-  });
+  let resultado = encabezado;
+  for (let i = 0; i < sala.length; i++) {
+    let lineaFila = `\nF${String(i + 1).padStart(2, "0")}: `;
+    for (let j = 0; j < sala[i].length; j++) {
+      lineaFila += sala[i][j] === 1 ? "X" : "L";
+      if (j < sala[i].length - 1) {
+        lineaFila += "  ";
+      }
+    }
+    resultado += lineaFila;
+  }
 
-  return [encabezado, ...filasFormateadas].join("\n");
+  return resultado;
 }
 
 // Intenta reservar un asiento en la posicion indicada y retorna un mensaje claro del resultado.
@@ -107,11 +127,21 @@ function describirContiguos(sala: Sala): string {
 
 // Duplica una sala para crear escenarios sin modificar la matriz original.
 function clonarSala(sala: Sala): Sala {
-  return sala.map((fila) => [...fila]);
+  const clon: Sala = [];
+
+  for (let i = 0; i < sala.length; i++) {
+    const filaClon: number[] = [];
+    for (let j = 0; j < sala[i].length; j++) {
+      filaClon.push(sala[i][j]);
+    }
+    clon.push(filaClon);
+  }
+
+  return clon;
 }
 
 // Ocupa asientos a partir de una lista de coordenadas [fila, columna].
-function ocuparAsientos(sala: Sala, asientos: Array<[number, number]>): void {
+function ocuparAsientos(sala: Sala, asientos: [number, number][]): void {
   for (const [fila, columna] of asientos) {
     const filaIndex = fila - 1;
     const columnaIndex = columna - 1;
@@ -124,12 +154,11 @@ function ocuparAsientos(sala: Sala, asientos: Array<[number, number]>): void {
 // Construye un bloque de salida para un escenario: mapa, conteo y contiguos.
 function resumenEscenario(nombre: string, sala: Sala): string {
   const conteo = contarAsientos(sala);
-  return [
-    `=== ${nombre} ===`,
-    mostrarSala(sala),
-    describirContiguos(sala),
-    `Ocupados: ${conteo.ocupados} | Disponibles: ${conteo.disponibles}`,
-  ].join("\n");
+  let resultado = `=== ${nombre} ===\n`;
+  resultado += `${mostrarSala(sala)}\n`;
+  resultado += `${describirContiguos(sala)}\n`;
+  resultado += `Ocupados: ${conteo.ocupados} | Disponibles: ${conteo.disponibles}`;
+  return resultado;
 }
 
 // Dibuja una interfaz web con selector de escenario y reserva por clic.
